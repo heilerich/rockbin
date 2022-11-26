@@ -23,7 +23,11 @@ func TestConnect(t *testing.T) {
 		{"user2", `hello"world`},
 	}
 	resource, pool := spinUpMQTT()
-	defer pool.Purge(resource)
+	defer func() {
+		if err := pool.Purge(resource); err != nil {
+			_, _ = fmt.Printf("WARNING: failed to cleanup mqtt server: %v\n", err)
+		}
+	}()
 
 	for _, up := range testData {
 		config := MqttConfig{Name: "hello",

@@ -72,7 +72,10 @@ func init() {
 	serveCmd.Flags().String("ca_cert", "", "Certificate Authority for TLS connections to the MQTT server.")
 	serveCmd.Flags().String("tls_key", "", "Client private key for TLS connections to the MQTT server.")
 	serveCmd.Flags().String("tls_cert", "", "Client certificate for TLS connections to the MQTT server.")
-	viper.GetViper().BindPFlags(serveCmd.Flags())
+
+	if err := viper.GetViper().BindPFlags(serveCmd.Flags()); err != nil {
+		log.WithError(err).Fatal("failed to bind pflags")
+	}
 }
 
 func setUpLogger(level string) {

@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -40,7 +40,9 @@ var statusCmd = &cobra.Command{
 		defer resp.Body.Close()
 
 		stats := status.Data{}
-		json.NewDecoder(resp.Body).Decode(&stats)
+		if err := json.NewDecoder(resp.Body).Decode(&stats); err != nil {
+			log.WithError(err).Fatal("failed to decode response as JSON")
+		}
 
 		prettyOutput, err := json.MarshalIndent(stats, "", "  ")
 		if err != nil {

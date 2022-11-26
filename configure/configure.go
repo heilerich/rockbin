@@ -104,7 +104,6 @@ func (p *CLIVariables) PromptUser() error {
 }
 
 func (p *CLIVariables) WriteOutTemplate(file string, data interface{}) error {
-
 	var (
 		outputFile string
 		tmplFile   string
@@ -124,23 +123,29 @@ func (p *CLIVariables) WriteOutTemplate(file string, data interface{}) error {
 		fileMode = 0755
 	}
 	fmt.Printf("Writing %s file to: %s\n", file, outputFile)
+
 	t, err := template.ParseFS(templateFiles, tmplFile)
 	if err != nil {
 		return err
 	}
 
-	os.MkdirAll(path.Dir(outputFile), 0755)
+	if err := os.MkdirAll(path.Dir(outputFile), 0755); err != nil {
+		return err
+	}
 
 	f, err := os.Create(outputFile)
-
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	err = t.Execute(f, data)
+	if err = t.Execute(f, data); err != nil {
+		return err
+	}
 
-	os.Chmod(outputFile, fileMode)
-	return err
+	if err := os.Chmod(outputFile, fileMode); err != nil {
+		return err
+	}
 
+	return nil
 }

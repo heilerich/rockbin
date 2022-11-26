@@ -12,8 +12,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var defaultCapacity = 60 * 40.
-
 // Bin a type to represent the bin
 type Bin struct {
 	FilePath string

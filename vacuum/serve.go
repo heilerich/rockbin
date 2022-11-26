@@ -11,16 +11,29 @@ import (
 
 func Serve(bin Bin, mqttClient mqtt.MqttConfig) {
 	// on launch tell home assistant that we exist
-	mqttClient.SendConfig()
+	if err := mqttClient.SendConfig(); err != nil {
+		log.WithError(err).Error("failed to send config to mqtt server")
+	}
 
 	// every minute send everything to the mqtt broker
 	c := cron.New()
-	c.AddFunc("@every 0h1m0s", func() {
+	_, err := c.AddFunc("@every 0h1m0s", func() {
 		log.Debug("Running cron job")
-		mqttClient.SendConfig()
+
+		if err := mqttClient.SendConfig(); err != nil {
+			log.WithError(err).Error("failed to send config to mqtt server")
+		}
+
 		bin.Update()
-		mqttClient.Send(bin.Value)
+
+		if err := mqttClient.Send(bin.Value); err != nil {
+			log.WithError(err).Error("failed to send value to mqtt server")
+		}
 	})
+	if err != nil {
+		log.WithError(err).Fatal("failed to setup cronjob")
+	}
+
 	c.Start()
 
 	// Setup a file watcher to get instance updates on file changes
@@ -42,10 +55,11 @@ func Serve(bin Bin, mqttClient mqtt.MqttConfig) {
 
 				bin.Update()
 				log.Debug("Current bin value is:", bin.Value)
-				mqttClient.Send(bin.Value)
+				if err := mqttClient.Send(bin.Value); err != nil {
+					log.WithError(err).Error("failed to send value to mqtt server")
+				}
 			case err := <-watcher.Errors:
-				log.Fatalln(err)
-
+				log.WithError(err).Fatal("fatal error in file watcher")
 			}
 		}
 	}()

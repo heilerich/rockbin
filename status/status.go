@@ -35,8 +35,12 @@ func New(host, port, version string, startTime time.Time) *Status {
 func (s *Status) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	s.Data.Uptime = fmt.Sprintf("%v", time.Since(s.StartTime).Seconds())
-	json.NewEncoder(w).Encode(s.Data)
-
+	if err := json.NewEncoder(w).Encode(s.Data); err != nil {
+		w.WriteHeader(500)
+		if _, err := w.Write([]byte(fmt.Sprintf("internal error: %v", err))); err != nil {
+			log.WithError(err).Warn("failed to write error response")
+		}
+	}
 }
 
 func (s *Status) Serve() {

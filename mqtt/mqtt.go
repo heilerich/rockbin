@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/url"
 	"os"
 	"time"
@@ -158,7 +158,7 @@ func (m *MqttConfig) getCACertificates() (*x509.CertPool, error) {
 		return nil, fmt.Errorf("failed to open ca certificate: %w", err)
 	}
 
-	pem, err := ioutil.ReadAll(file)
+	pem, err := io.ReadAll(file)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read ca certificate: %w", err)
 	}
