@@ -4,3 +4,8 @@ dist/*
 .vscode/launch.json
 tests/S12Rockbin
 tests/rockbin.yaml
+tests/certificates/*.key
+tests/certificates/*.csr
+tests/certificates/*.pem
+tests/certificates/*.crt
+tests/certificates/*.srl

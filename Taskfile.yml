@@ -18,6 +18,7 @@ tasks:
       - goreleaser --snapshot
   
   test:
+    deps: [gen_server, gen_client]
     cmds: 
       - go test -v ./mqtt/ ./vacuum/ {{.CLI_ARGS}}
   
@@ -35,3 +36,39 @@ tasks:
     vars:
       MQTT_ID:
         sh: docker ps --filter name=mqtt_server --format {{"{{.ID}}"}}
+
+  gen_ca:
+    dir: tests/certificates
+    status:
+      - test -f rootCA.pem
+      - test -f rootCA.key
+    cmds:
+      - >-
+        openssl req -x509 -new -nodes -newkey rsa:2048 -keyout rootCA.key -sha256 -days 3650 -out rootCA.pem
+        -subj "/C=US/ST=State/L=City/O=GoTest/CN=TestCA"
+  
+  gen_client:
+    dir: tests/certificates
+    status:
+      - test -f client.key
+      - test -f client.csr
+      - test -f client.crt
+    deps: [gen_ca]
+    cmds:
+      - >-
+        openssl req -newkey rsa:2048 -nodes -keyout client.key -out client.csr
+        -subj "/C=US/ST=State/L=City/O=GoTest/CN=client"
+      - openssl x509 -req -in client.csr -CA rootCA.pem -CAkey rootCA.key -CAcreateserial -out client.crt -days 3650 -sha256
+
+  gen_server:
+    dir: tests/certificates
+    deps: [gen_ca]
+    status:
+      - test -f server.key
+      - test -f server.csr
+      - test -f server.crt
+    cmds:
+      - >-
+        openssl req -newkey rsa:2048 -nodes -keyout server.key -out server.csr
+        -subj "/C=US/ST=State/L=City/O=GoTest/CN=localhost"
+      - openssl x509 -req -in server.csr -CA rootCA.pem -CAkey rootCA.key -CAcreateserial -out server.crt -days 3650 -sha256 -extfile server.ext

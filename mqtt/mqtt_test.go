@@ -9,6 +9,7 @@ import (
 
 	"github.com/ory/dockertest/v3"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestConnect(t *testing.T) {
@@ -22,25 +23,26 @@ func TestConnect(t *testing.T) {
 		{"user2", `hello"world`},
 	}
 	resource, pool := spinUpMQTT()
+	defer pool.Purge(resource)
+
 	for _, up := range testData {
 		config := MqttConfig{Name: "hello",
 			UnitOfMeasurement: "hello",
 			StateTopic:        "hello",
 			ConfigTopic:       "hello",
 			UniqueID:          "hello",
-			Server:            fmt.Sprintf("mqtt://localhost:%v", resource.GetPort("1883/tcp")),
+			Server:            fmt.Sprintf("mqtts://localhost:%v", resource.GetPort("1883/tcp")),
 			Username:          up.username,
 			Password:          up.password,
+			CAPath:            "../tests/certificates/rootCA.pem",
+			CertPath:          "../tests/certificates/server.crt",
+			KeyPath:           "../tests/certificates/server.key",
 		}
 
 		err := config.Connect()
-		assert.NoError(err)
+		require.NoError(t, err, "require MQTT connection")
 		assert.True(config.Client.IsConnected())
-
 	}
-
-	pool.Purge(resource)
-
 }
 
 func TestPreparePayload(t *testing.T) {
@@ -83,8 +85,11 @@ func spinUpMQTT() (*dockertest.Resource, *dockertest.Pool) {
 		Tag:          "2.0.9",
 		Name:         "mosquitto",
 		ExposedPorts: []string{"1883", "9001"},
-		Mounts: []string{fmt.Sprintf("%v:/mosquitto/config/mosquitto.conf", path.Join(dir, "../tests/mosquitto.conf")),
-			fmt.Sprintf("%v:/password.txt", path.Join(dir, "../tests/password.txt"))},
+		Mounts: []string{
+			fmt.Sprintf("%v:/mosquitto/config/mosquitto.conf", path.Join(dir, "../tests/mosquitto.conf")),
+			fmt.Sprintf("%v:/certs", path.Join(dir, "../tests/certificates")),
+			fmt.Sprintf("%v:/password.txt", path.Join(dir, "../tests/password.txt")),
+		},
 	}
 
 	resource, err := pool.RunWithOptions(options)
