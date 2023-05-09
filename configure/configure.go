@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"html/template"
 	"io/fs"
+	"io/ioutil"
 	"os"
 	"path"
 
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/pflag"
+	"gopkg.in/yaml.v3"
 )
 
 type CLIVariables struct {
@@ -86,10 +88,26 @@ func NewPrompter(flags *pflag.FlagSet, configFile, serviceFilePath string) (*CLI
 func (p *CLIVariables) PromptUser() error {
 
 	p.Responses = make(map[string]string)
+
+	yamlData, err := ioutil.ReadFile(p.ConfigFile)
+	if err != nil {
+		fmt.Printf("did not read existing config file: %v", err)
+	} else {
+		err = yaml.Unmarshal(yamlData, p.Responses)
+		if err != nil {
+			fmt.Printf("did read existing config file, but failed to parse: %v", err)
+		}
+	}
+
 	for _, arg := range p.Variables {
+		value, ok := p.Responses[arg.Name]
+		if !ok {
+			value = arg.DefaultValue
+		}
+
 		prompt := promptui.Prompt{
 			Label:   arg.Usage,
-			Default: arg.DefaultValue,
+			Default: value,
 		}
 
 		answer, err := prompt.Run()

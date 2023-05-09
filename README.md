@@ -1,11 +1,3 @@
-# !!!Archived!!!
-
-**I have purchased a new vacuum and no longer use this project, and have therefore archived this project. 
-I will not make any new changes to the code, and due to potential future security issues, 
-I would recommend that users find a different alternative. 
-Feel free to fork the repo if you want.**
-
-
 # rockbin
 
 
